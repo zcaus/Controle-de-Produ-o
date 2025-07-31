@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Acompanhamento</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Acompanhamento de Processos</h1>
+            <div class="profile-selector">
+                <button class="profile-btn" id="btn-separacao" onclick="changeProfile('separacao')">
+                    Separação <span class="notification-badge hidden">0</span>
+                </button>
+                <button class="profile-btn" id="btn-embalagem" onclick="changeProfile('embalagem')">
+                    Embalagem <span class="notification-badge hidden">0</span>
+                </button>
+                <button class="profile-btn" id="btn-compras" onclick="changeProfile('compras')">
+                    Compras <span class="notification-badge hidden">0</span>
+                </button>
+                <button class="profile-btn" id="btn-pca" onclick="changeProfile('pca')">
+                    PCA <span class="notification-badge hidden">0</span>
+                </button>
+                <button class="profile-btn" id="btn-admin" onclick="changeProfile('admin')">Admin</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div id="alert-container"></div>
+
+            <section class="stats">
+                <div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total de Itens</h3>
+                    <p id="total-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Itens na Tabela</h3>
+                    <p id="total-table-items">0</p>
+                </div>
+                <div class="stat-card" id="clientes-unique-card">
+                    <h3>Clientes</h3>
+                    <p id="total-unique-clientes">0</p>
+                    <div class="nf-tooltip" id="clientes-tooltip"></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pedidos</h3>
+                    <p id="total-unique-pedidos">0</p>
+                </div>
+                <div>
+                </div>
+                <div class="stat-card">
+                    <h3>Separação</h3>
+                    <p id="em-separacao-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Separados</h3>
+                    <p id="separado-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Compras</h3>
+                    <p id="em-compras-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Embalagem</h3>
+                    <p id="embalagem-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>PCA</h3>
+                    <p id="em-pca-items">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Concluídos</h3>
+                    <p id="concluido-items">0</p>
+                </div>
+            </section>
+
+            <section class="filters">
+                <input type="text" id="filter-oe" class="filter-input" placeholder="Filtrar por OE...">
+                <input type="text" id="filter-cliente" class="filter-input" placeholder="Filtrar por Cliente...">
+                <input type="text" id="filter-produto" class="filter-input" placeholder="Filtrar por Produto...">
+                
+                <select id="filter-status" class="filter-input">
+                    <option value="">Todos os Status</option>
+                    <option value="emSeparacao">Separação</option>
+                    <option value="separado">Separado</option>
+                    <option value="embalagem">Embalagem</option>
+                    <option value="emCompras">Compras</option>
+                    <option value="emPca">PCA</option>
+                    <option value="concluido">Concluído</option>
+                </select>
+
+                <input type="text" id="filter-responsavel-pca" class="filter-input pca-column" placeholder="Responsável PCA...">
+                <input type="text" id="filter-tipo-servico-pca" class="filter-input pca-column" placeholder="Tipo Serviço PCA...">
+            </section>
+
+            <section class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>OE</th>
+                            <th>Pedido Cliente</th>
+                            <th>Data Pedido</th>
+                            <th>Cliente</th>
+                            <th>Produto</th>
+                            <th>Modelo</th>
+                            <th>QTD</th>
+                            <th class="pca-column">Data Envio PCA</th>
+                            <th class="pca-column">Previsão Retorno PCA</th>
+                            <th class="pca-column">Data Retorno PCA</th>
+                            <th class="pca-column">Responsável PCA</th>
+                            <th class="pca-column">Tipo Serviço PCA</th>
+                            <th>Status Global</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Item</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label for="edit-oe">OE:</label>
+                    <input type="text" id="edit-oe" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-pedido">Pedido Cliente:</label>
+                    <input type="text" id="edit-pedido">
+                </div>
+                <div class="form-group">
+                    <label for="edit-data-pedido">Data Pedido:</label>
+                    <input type="date" id="edit-data-pedido">
+                </div>
+                <div class="form-group">
+                    <label for="edit-fantasia">Cliente (Fantasia):</label>
+                    <input type="text" id="edit-fantasia">
+                </div>
+                <div class="form-group">
+                    <label for="edit-produto">Produto:</label>
+                    <input type="text" id="edit-produto">
+                </div>
+                <div class="form-group">
+                    <label for="edit-modelo">Modelo:</label>
+                    <input type="text" id="edit-modelo">
+                </div>
+                <div class="form-group">
+                    <label for="edit-qtd">Quantidade:</label>
+                    <input type="number" id="edit-qtd" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="edit-data-envio">Data Envio PCA:</label>
+                    <input type="date" id="edit-data-envio">
+                </div>
+                <div class="form-group">
+                    <label for="edit-previsao-retorno">Previsão Retorno PCA:</label>
+                    <input type="date" id="edit-previsao-retorno">
+                </div>
+                <div class="form-group">
+                    <label for="edit-data-retorno">Data Retorno PCA:</label>
+                    <input type="date" id="edit-data-retorno">
+                </div>
+                <div class="form-group">
+                    <label for="edit-responsavel-pca">Responsável PCA:</label>
+                    <input type="text" id="edit-responsavel-pca">
+                </div>
+                <div class="form-group">
+                    <label for="edit-tipo-servico-pca">Tipo Serviço PCA:</label>
+                    <input type="text" id="edit-tipo-servico-pca">
+                </div>
+                <div class="form-group">
+                    <label for="edit-status-global">Status Global:</label>
+                    <select id="edit-status-global"></select>
+                </div>
+                <button type="submit" class="action-btn success">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-to-pca" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Enviar para PCA</h2>
+                <span class="close" onclick="closeModalToPca()">&times;</span>
+            </div>
+            <form id="form-to-pca">
+                <input type="hidden" id="to-pca-item-id">
+                <p>Confirmar envio do item OE: <strong id="to-pca-oe"></strong> para PCA?</p>
+                <div class="form-group">
+                    <label for="to-pca-responsavel">Responsável PCA:</label>
+                    <input type="text" id="to-pca-responsavel" required>
+                </div>
+                <div class="form-group">
+                    <label for="to-pca-tipo-servico">Tipo de Serviço PCA:</label>
+                    <input type="text" id="to-pca-tipo-servico" required>
+                </div>
+                <div class="form-group">
+                    <label for="to-pca-previsao-retorno">Previsão de Retorno:</label>
+                    <input type="date" id="to-pca-previsao-retorno" required>
+                </div>
+                <button type="submit" class="action-btn success">Confirmar Envio</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-from-pca" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Receber do PCA</h2>
+                <span class="close" onclick="closeModalFromPca()">&times;</span>
+            </div>
+            <form id="form-from-pca">
+                <input type="hidden" id="from-pca-item-id">
+                <p>Receber item OE: <strong id="from-pca-oe"></strong> do PCA.</p>
+                <div class="form-group">
+                    <label for="from-pca-data-retorno">Data de Retorno:</label>
+                    <input type="date" id="from-pca-data-retorno" required>
+                </div>
+                <div class="form-group">
+                    <label for="from-pca-destino">Destino Após PCA:</label>
+                    <select id="from-pca-destino" required>
+                        <option value="">Selecione o Destino</option>
+                        <option value="separado">Separado</option>
+                        <option value="embalagem">Embalagem</option>
+                        <option value="concluido">Concluído</option>
+                    </select>
+                </div>
+                <button type="submit" class="action-btn success">Confirmar Recebimento</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
