@@ -312,6 +312,7 @@ function populateFilterDropdown(elementId, options) {
  */
 function addFilterListeners() {
     document.getElementById('filter-oe').addEventListener('input', updateDisplay);
+    document.getElementById('filter-pedido-cliente').addEventListener('input', updateDisplay); // NOVO LISTENER
     document.getElementById('filter-cliente').addEventListener('input', updateDisplay);
     document.getElementById('filter-produto').addEventListener('input', updateDisplay);
     document.getElementById('filter-status').addEventListener('change', updateDisplay);
@@ -354,6 +355,7 @@ function filterData() {
 
     // Filtros de texto e seleção (aplicados sobre os dados já filtrados por perfil)
     const oeFilter = document.getElementById('filter-oe').value.toLowerCase();
+    const pedidoClienteFilter = document.getElementById('filter-pedido-cliente').value.toLowerCase(); // NOVO FILTRO
     const clienteFilter = document.getElementById('filter-cliente').value.toLowerCase();
     const produtoFilter = document.getElementById('filter-produto').value.toLowerCase();
     const responsavelPcaFilter = document.getElementById('filter-responsavel-pca').value.toLowerCase();
@@ -365,6 +367,13 @@ function filterData() {
             String(item.oe || '').toLowerCase().includes(oeFilter)
         );
     }
+    // LÓGICA DO NOVO FILTRO AQUI
+    if (pedidoClienteFilter) {
+        tempFiltered = tempFiltered.filter(item =>
+            String(item.pedidoCliente || '').toLowerCase().includes(pedidoClienteFilter)
+        );
+    }
+    // FIM DA LÓGICA DO NOVO FILTRO
     if (clienteFilter) {
         tempFiltered = tempFiltered.filter(item =>
             String(item.fantasia || '').toLowerCase().includes(clienteFilter)
