@@ -1,6 +1,6 @@
 // COLOQUE A URL DO SEU NOVO WEB APP DO APPS SCRIPT AQUI!
 // Será algo como: https://script.google.com/macros/s/SEU_ID_DE_DEPLOYMENT/exec
-const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz0mrV_qsAbgj6kOb8L23-rcgDQzwOoxLfKc18wEyPWZDhZkk3NHruZv98_PwaGjQSQjA/exec'; // <--- ATUALIZE ESTA URL SE NECESSÁRIO!
+const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxg2z5IOziYu9JtGORuUsvl9anojDUWulT8Nr1VChrsnKTe2C9sBqobkkXpWn2882eZeQ/exec'; // <--- ATUALIZE ESTA URL SE NECESSÁRIO!
 
 let currentProfile = 'separacao'; // Perfil padrão ao carregar
 let data = []; // Armazena todos os dados do Google Sheet
@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit-modal').style.display = 'none';
     document.getElementById('modal-to-pca').style.display = 'none';
     document.getElementById('modal-from-pca').style.display = 'none';
+    document.getElementById('modal-separacao').style.display = 'none'; // Novo modal
 
     setupFilters();
     loadDataFromGoogleSheet(); // Inicia o carregamento de dados
@@ -60,20 +61,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // ATENÇÃO: Chamar togglePcaColumnsVisibility aqui para definir a visibilidade inicial
     togglePcaColumnsVisibility(currentProfile); 
 
-    // Inicia a atualização automática a cada 30 segundos
-    startAutoRefresh(30000); // 30000 milissegundos = 30 segundos
-
-    // Listener para o card de Clientes Únicos (para o tooltip)
+    // Adiciona event listeners para o tooltip do card de clientes
     const clientesUniqueCard = document.getElementById('clientes-unique-card');
     const clientesTooltip = document.getElementById('clientes-tooltip');
 
-    if (!clientesUniqueCard || !clientesTooltip) {
-        console.error('Tooltip: Elementos clientesUniqueCard ou clientesTooltip não encontrados no DOM. Verifique seu HTML.');
+    if (clientesUniqueCard && clientesTooltip) {
+        clientesUniqueCard.addEventListener('mouseenter', () => {
+            const rect = clientesUniqueCard.getBoundingClientRect();
+            clientesTooltip.style.top = `${rect.bottom + window.scrollY + 5}px`; // Posiciona 5px abaixo do card
+            clientesTooltip.style.left = `${rect.left + window.scrollX}px`;
+            clientesTooltip.style.display = 'block';
+        });
+        clientesUniqueCard.addEventListener('mouseleave', () => {
+            clientesTooltip.style.display = 'none';
+        });
     }
 
+
     // Event listeners para os modais de ação
+    document.getElementById('edit-form').addEventListener('submit', handleEditSubmit);
     document.getElementById('form-to-pca').addEventListener('submit', handleSendToPca);
     document.getElementById('form-from-pca').addEventListener('submit', handleReceiveFromPca);
+    document.getElementById('form-separacao').addEventListener('submit', handleSeparacaoSubmit); // Novo listener
     
     addFilterListeners(); // Adiciona os listeners para os filtros
 });
@@ -239,6 +248,7 @@ function getStatusLabel(status) {
     const labels = {
         'emSeparacao': 'Separação',
         'separado': 'Separado',
+        'parcial': 'Parcial', // NOVO STATUS
         'embalagem': 'Embalagem',
         'emCompras': 'Compras',
         'emPca': 'PCA',
@@ -312,7 +322,7 @@ function populateFilterDropdown(elementId, options) {
  */
 function addFilterListeners() {
     document.getElementById('filter-oe').addEventListener('input', updateDisplay);
-    document.getElementById('filter-pedido-cliente').addEventListener('input', updateDisplay); // NOVO LISTENER
+    document.getElementById('filter-pedido-cliente').addEventListener('input', updateDisplay);
     document.getElementById('filter-cliente').addEventListener('input', updateDisplay);
     document.getElementById('filter-produto').addEventListener('input', updateDisplay);
     document.getElementById('filter-status').addEventListener('change', updateDisplay);
@@ -336,11 +346,12 @@ function filterData() {
         case 'embalagem':
             tempFiltered = tempFiltered.filter(item =>
                 item.statusGlobal === 'separado' || item.statusGlobal === 'embalagem' ||
+                item.statusGlobal === 'parcial' || 
                 (item.statusGlobal === 'retornoPca' && item.destinoAposPca === 'embalagem')
             );
             break;
         case 'compras':
-            tempFiltered = tempFiltered.filter(item => item.statusGlobal === 'emCompras');
+            tempFiltered = tempFiltered.filter(item => item.statusGlobal === 'emCompras' || item.statusGlobal === 'parcial');
             break;
         case 'pca':
             tempFiltered = tempFiltered.filter(item => item.statusGlobal === 'emPca' || item.statusGlobal === 'retornoPca');
@@ -355,7 +366,7 @@ function filterData() {
 
     // Filtros de texto e seleção (aplicados sobre os dados já filtrados por perfil)
     const oeFilter = document.getElementById('filter-oe').value.toLowerCase();
-    const pedidoClienteFilter = document.getElementById('filter-pedido-cliente').value.toLowerCase(); // NOVO FILTRO
+    const pedidoClienteFilter = document.getElementById('filter-pedido-cliente').value.toLowerCase();
     const clienteFilter = document.getElementById('filter-cliente').value.toLowerCase();
     const produtoFilter = document.getElementById('filter-produto').value.toLowerCase();
     const responsavelPcaFilter = document.getElementById('filter-responsavel-pca').value.toLowerCase();
@@ -367,13 +378,11 @@ function filterData() {
             String(item.oe || '').toLowerCase().includes(oeFilter)
         );
     }
-    // LÓGICA DO NOVO FILTRO AQUI
     if (pedidoClienteFilter) {
         tempFiltered = tempFiltered.filter(item =>
             String(item.pedidoCliente || '').toLowerCase().includes(pedidoClienteFilter)
         );
     }
-    // FIM DA LÓGICA DO NOVO FILTRO
     if (clienteFilter) {
         tempFiltered = tempFiltered.filter(item =>
             String(item.fantasia || '').toLowerCase().includes(clienteFilter)
@@ -426,6 +435,7 @@ function updateStats() {
 
     const emSeparacaoItems = data.filter(item => item.statusGlobal === 'emSeparacao').length;
     const separadoItems = data.filter(item => item.statusGlobal === 'separado').length;
+    const parcialItems = data.filter(item => item.statusGlobal === 'parcial').length;
     const embalagemItems = data.filter(item => item.statusGlobal === 'embalagem').length;
     const emComprasItems = data.filter(item => item.statusGlobal === 'emCompras').length;
     const emPcaItems = data.filter(item => item.statusGlobal === 'emPca').length;
@@ -437,20 +447,20 @@ function updateStats() {
     document.getElementById('total-unique-pedidos').textContent = totalUniquePedidos;
     
     document.getElementById('em-separacao-items').textContent = emSeparacaoItems;
-    document.getElementById('separado-items').textContent = separadoItems;
-    document.getElementById('embalagem-items').textContent = embalagemItems;
-    document.getElementById('em-compras-items').textContent = emComprasItems;
+    document.getElementById('separado-items').textContent = separadoItems + parcialItems; // Inclui itens parciais
+    document.getElementById('embalagem-items').textContent = embalagemItems + parcialItems; // Inclui itens parciais
+    document.getElementById('em-compras-items').textContent = emComprasItems + parcialItems; // Inclui itens parciais
     document.getElementById('em-pca-items').textContent = emPcaItems;
     document.getElementById('concluido-items').textContent = concluidoItems;
 
-    // AQUI: Preencher o conteúdo do tooltip de clientes
+    // AQUI: Preencher o conteúdo do tooltip de clientes (agora dinâmico no hover)
     const clientesTooltip = document.getElementById('clientes-tooltip');
     if (clientesTooltip) {
         let clientesList = Array.from(uniqueClientes).sort().join('<br>');
         if (clientesList === '') {
             clientesList = 'Nenhum cliente encontrado.';
         }
-        clientesTooltip.innerHTML = `<strong>Clientes Únicos:</strong><br>${clientesList}`;
+        clientesTooltip.innerHTML = `<strong>Clientes:</strong><br>${clientesList}`;
     }
 
     console.log('updateStats:', { totalItems, totalTableItems, totalUniqueClientes, totalUniquePedidos, emSeparacaoItems, separadoItems, embalagemItems, emComprasItems, emPcaItems, concluidoItems });
@@ -461,16 +471,13 @@ function updateStats() {
  */
 function updateNotificationBadges() {
     const emSeparacaoCount = data.filter(item => item.statusGlobal === 'emSeparacao').length;
-    const separadoCount = data.filter(item => item.statusGlobal === 'separado').length;
-    const embalagemCount = data.filter(item => item.statusGlobal === 'embalagem').length; // Contagem para "Embalagem"
-    const emComprasCount = data.filter(item => item.statusGlobal === 'emCompras').length;
+    const separadoCount = data.filter(item => item.statusGlobal === 'separado' || item.statusGlobal === 'parcial').length;
+    const embalagemCount = data.filter(item => item.statusGlobal === 'embalagem' || item.statusGlobal === 'parcial' || (item.statusGlobal === 'retornoPca' && item.destinoAposPca === 'embalagem')).length;
+    const emComprasCount = data.filter(item => item.statusGlobal === 'emCompras' || item.statusGlobal === 'parcial').length;
     const emPcaOrRetornoPcaCount = data.filter(item => item.statusGlobal === 'emPca' || item.statusGlobal === 'retornoPca').length;
 
     updateBadge(document.getElementById('btn-separacao'), emSeparacaoCount);
-    // Para Embalagem, podemos somar 'separado' e 'embalagem' para o badge, se desejado.
-    // Ou manter apenas um deles, dependendo do que o usuário de embalagem precisa ver prioritariamente.
-    // Por enquanto, vamos somar para mostrar um total de itens que podem ser de interesse da Embalagem.
-    updateBadge(document.getElementById('btn-embalagem'), separadoCount + embalagemCount); 
+    updateBadge(document.getElementById('btn-embalagem'), embalagemCount); 
     updateBadge(document.getElementById('btn-compras'), emComprasCount);
     updateBadge(document.getElementById('btn-pca'), emPcaOrRetornoPcaCount);
 
@@ -554,11 +561,11 @@ function getActionButtons(item) {
         buttons += `<button class="action-btn" onclick="editItem(${item.id})">Editar</button>`;
     } else if (currentProfile === 'separacao') {
         if (item.statusGlobal === 'emSeparacao') {
-            buttons += `<button class="action-btn success" onclick="changeStatus(${item.id}, 'separado')">Marcar Separado</button>`;
+            buttons += `<button class="action-btn success" onclick="openSeparacaoModal(${item.id})">Marcar Separado</button>`;
             buttons += `<button class="action-btn danger" onclick="changeStatus(${item.id}, 'emCompras')">Mover para Compras</button>`;
         }
     } else if (currentProfile === 'embalagem') {
-        if (item.statusGlobal === 'separado' || (item.statusGlobal === 'retornoPca' && item.destinoAposPca === 'embalagem')) {
+        if (item.statusGlobal === 'separado' || (item.statusGlobal === 'retornoPca' && item.destinoAposPca === 'embalagem') || item.statusGlobal === 'parcial') {
             buttons += `<button class="action-btn" onclick="changeStatus(${item.id}, 'embalagem')">Marcar Embalagem/Máquina</button>`;
             buttons += `<button class="action-btn success" onclick="openToPcaModal(${item.id})">Enviar para PCA</button>`;
             buttons += `<button class="action-btn success" onclick="changeStatus(${item.id}, 'concluido')">Marcar Concluído</button>`;
@@ -714,6 +721,7 @@ function editItem(itemId) {
     statusSelect.innerHTML = `
         <option value="emSeparacao">Separação</option>
         <option value="separado">Separado</option> 
+        <option value="parcial">Parcial</option>
         <option value="embalagem">Embalagem</option>
         <option value="emCompras">Compras</option>
         <option value="emPca">PCA</option>
@@ -729,7 +737,7 @@ function editItem(itemId) {
  * Lida com o envio do formulário de edição.
  * @param {Event} event - O evento de submit do formulário.
  */
-document.getElementById('edit-form').addEventListener('submit', async function(event) {
+async function handleEditSubmit(event) {
     event.preventDefault();
     console.log('edit-form: Submit acionado.');
 
@@ -768,7 +776,7 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
         showAlert(`Erro ao salvar edições: ${error.message}`, 'danger');
         console.error('Erro ao salvar edições:', error);
     }
-});
+}
 
 /**
  * Fecha o modal de edição.
@@ -777,6 +785,107 @@ function closeModal() {
     document.getElementById('edit-modal').style.display = 'none';
     currentEditItem = null;
     console.log('closeModal: Modal de edição fechado.');
+}
+
+/**
+ * Abre o modal de separação para um item.
+ * @param {number} itemId - ID do item.
+ */
+function openSeparacaoModal(itemId) {
+    const item = data.find(item => item.id === itemId);
+    if (!item) {
+        showAlert('Erro: Item não encontrado.', 'danger');
+        return;
+    }
+    document.getElementById('separacao-item-id').value = item.id;
+    document.getElementById('separacao-oe').textContent = item.oe;
+    document.getElementById('separacao-qtd-total').textContent = item.qtd;
+    document.getElementById('separacao-qtd-separada').value = item.qtd; // Preenche com a quantidade total por padrão
+    document.getElementById('modal-separacao').style.display = 'flex';
+}
+
+/**
+ * Lida com o envio do formulário de Separação.
+ * @param {Event} event - Evento de submit.
+ */
+async function handleSeparacaoSubmit(event) {
+    event.preventDefault();
+    const itemId = parseInt(document.getElementById('separacao-item-id').value);
+    const qtdSeparada = parseInt(document.getElementById('separacao-qtd-separada').value);
+
+    const item = data.find(item => item.id === itemId);
+    if (!item) {
+        showAlert('Erro: Item não encontrado para separação.', 'danger');
+        return;
+    }
+    
+    const qtdTotal = parseInt(item.qtd);
+
+    if (isNaN(qtdSeparada) || qtdSeparada <= 0 || qtdSeparada > qtdTotal) {
+        showAlert(`A quantidade separada deve ser um número entre 1 e ${qtdTotal}.`, 'danger');
+        return;
+    }
+
+    const itemsToUpdate = [];
+    let statusParaAtualizar;
+    let message;
+
+    if (qtdSeparada === qtdTotal) {
+        // Separação completa
+        statusParaAtualizar = 'separado';
+        message = `Item ${item.oe} marcado como "Separado"!`;
+        const updatedItem = {
+            ...item, // Copia o item original
+            _rowIndex: item._rowIndex,
+            statusGlobal: statusParaAtualizar,
+            dataFimSeparacao: new Date().toISOString().split('T')[0] // Data de finalização
+        };
+        itemsToUpdate.push(updatedItem);
+    } else {
+        // Separação parcial
+        statusParaAtualizar = 'parcial';
+        message = `Item ${item.oe} marcado como "Parcial"! O restante foi enviado para Compras.`;
+
+        // 1. Atualizar o item original (a parte separada)
+        const updatedItem = {
+            ...item, // Copia o item original
+            _rowIndex: item._rowIndex,
+            qtd: qtdSeparada, // Atualiza a quantidade
+            statusGlobal: statusParaAtualizar, // Novo status 'parcial'
+            dataFimSeparacao: new Date().toISOString().split('T')[0]
+        };
+        itemsToUpdate.push(updatedItem);
+
+        // 2. Criar um novo item para o restante
+        const remainingQtd = qtdTotal - qtdSeparada;
+        const newItem = {
+            ...item,
+            _rowIndex: null, // Novo item, sem índice de linha existente
+            qtd: remainingQtd,
+            statusGlobal: 'emCompras', // O restante vai para Compras
+            dataInicioSeparacao: null, // Reseta a data de início de separação
+            dataFimSeparacao: null // Reseta a data de fim de separação
+        };
+        delete newItem.id; // Remove o ID para que o Apps Script gere um novo
+        itemsToUpdate.push(newItem);
+    }
+
+    try {
+        await updateItemsInGoogleSheet(itemsToUpdate);
+        closeSeparacaoModal();
+        showAlert(message, 'success');
+    } catch (error) {
+        showAlert(`Erro ao processar a separação: ${error.message}`, 'danger');
+        console.error('Erro ao processar a separação:', error);
+    }
+}
+
+/**
+ * Fecha o modal de separação.
+ */
+function closeSeparacaoModal() {
+    document.getElementById('modal-separacao').style.display = 'none';
+    document.getElementById('form-separacao').reset();
 }
 
 /**
@@ -802,49 +911,49 @@ function openToPcaModal(itemId) {
  * @param {Event} event - Evento de submit.
  */
 async function handleSendToPca(event) {
-    event.preventDefault(); // <-- CRUCIAL: Garante que o formulário não recarregue a página
-    console.log("1. handleSendToPca iniciado."); // Log para depuração
+    event.preventDefault(); 
+    console.log("1. handleSendToPca iniciado."); 
 
     const itemId = parseInt(document.getElementById('to-pca-item-id').value);
     const responsavel = document.getElementById('to-pca-responsavel').value.trim();
     const tipoServico = document.getElementById('to-pca-tipo-servico').value.trim();
-    const previsaoRetorno = document.getElementById('to-pca-previsao-retorno').value; // <-- CORRIGIDO: Era previsaoRetvisoRetorno
+    const previsaoRetorno = document.getElementById('to-pca-previsao-retorno').value; 
 
-    console.log("2. Valores do formulário capturados:", { responsavel, tipoServico, previsaoRetorno }); // Log para depuração
+    console.log("2. Valores do formulário capturados:", { responsavel, tipoServico, previsaoRetorno }); 
 
     if (!responsavel || !tipoServico || !previsaoRetorno) {
         showAlert('Por favor, preencha o Responsável PCA, o Tipo de Serviço PCA e a Previsão de Retorno.', 'danger');
-        console.log("3. Validação falhou."); // Log para depuração
+        console.log("3. Validação falhou."); 
         return;
     }
 
     const item = data.find(item => item.id === itemId);
     if (!item) {
         showAlert('Erro: Item não encontrado para enviar para PCA.', 'danger');
-        console.log("4. Item não encontrado."); // Log para depuração
+        console.log("4. Item não encontrado."); 
         return;
     }
 
     const updatedItem = {
         id: item.id,
         _rowIndex: item._rowIndex,
-        dataEnvio: new Date().toISOString().split('T')[0], // Data de envio é sempre hoje
-        previsaoRetorno: previsaoRetorno, // <-- CORRIGIDO: Era previsaoRetvisoRetorno
+        dataEnvio: new Date().toISOString().split('T')[0], 
+        previsaoRetorno: previsaoRetorno, 
         responsavelPca: responsavel,
         tipoServicoPca: tipoServico,
         statusGlobal: 'emPca'
     };
 
-    console.log("5. Chamando updateItemsInGoogleSheet com:", updatedItem); // Log para depuração
+    console.log("5. Chamando updateItemsInGoogleSheet com:", updatedItem); 
     try {
-        await updateItemsInGoogleSheet(updatedItem); // Aguarda a conclusão da operação assíncrona
-        closeModalToPca(); // Fechar o modal APENAS após o sucesso
+        await updateItemsInGoogleSheet(updatedItem); 
+        closeModalToPca(); 
         showAlert(`Item ${item.oe} enviado para PCA com sucesso!`, 'success');
-        console.log("6. updateItemsInGoogleSheet bem-sucedido."); // Log para depuração
+        console.log("6. updateItemsInGoogleSheet bem-sucedido."); 
     } catch (error) {
         showAlert(`Erro ao enviar para PCA: ${error.message}`, 'danger');
         console.error('Erro ao enviar para PCA:', error);
-        console.log("7. Erro durante a atualização."); // Log para depuração
+        console.log("7. Erro durante a atualização."); 
     }
 }
 
@@ -853,7 +962,7 @@ async function handleSendToPca(event) {
  */
 function closeModalToPca() {
     document.getElementById('modal-to-pca').style.display = 'none';
-    document.getElementById('form-to-pca').reset(); // Limpa o formulário
+    document.getElementById('form-to-pca').reset(); 
     console.log('closeModalToPca: Modal "Enviar para PCA" fechado.');
 }
 
@@ -869,9 +978,9 @@ function openFromPcaModal(itemId) {
     }
     document.getElementById('from-pca-item-id').value = item.id;
     document.getElementById('from-pca-oe').textContent = item.oe;
-    document.getElementById('from-pca-data-retorno').value = formatToInputDate(new Date()); // Preenche com a data atual
-    document.getElementById('from-pca-destino').value = item.destinoAposPca || ''; // Mantém o destino anterior se houver
-    document.getElementById('modal-from-pca').style.display = 'flex'; // Usar 'flex' para centralização via CSS
+    document.getElementById('from-pca-data-retorno').value = formatToInputDate(new Date()); 
+    document.getElementById('from-pca-destino').value = item.destinoAposPca || ''; 
+    document.getElementById('modal-from-pca').style.display = 'flex'; 
 }
 
 /**
@@ -905,7 +1014,7 @@ async function handleReceiveFromPca(event) {
     
     try {
         await updateItemsInGoogleSheet(updatedItem);
-        closeModalFromPca(); // Fechar o modal APENAS após o sucesso
+        closeModalFromPca(); 
         showAlert(`Item ${item.oe} recebido do PCA com destino para "${getStatusLabel(updatedItem.statusGlobal)}"!`, 'success');
     } catch (error) {
         showAlert(`Erro ao receber do PCA: ${error.message}`, 'danger');
@@ -918,6 +1027,6 @@ async function handleReceiveFromPca(event) {
  */
 function closeModalFromPca() {
     document.getElementById('modal-from-pca').style.display = 'none';
-    document.getElementById('form-from-pca').reset(); // Limpa o formulário
+    document.getElementById('form-from-pca').reset(); 
     console.log('closeModalFromPca: Modal "Receber do PCA" fechado.');
 }

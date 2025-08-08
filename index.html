@@ -35,8 +35,6 @@
             <div id="alert-container"></div>
 
             <section class="stats">
-                <div>
-                </div>
                 <div class="stat-card">
                     <h3>Total de Itens</h3>
                     <p id="total-items">0</p>
@@ -45,16 +43,14 @@
                     <h3>Itens na Tabela</h3>
                     <p id="total-table-items">0</p>
                 </div>
-                <div class="stat-card" id="clientes-unique-card">
+                <div class="stat-card tooltip-container" id="clientes-unique-card">
                     <h3>Clientes</h3>
                     <p id="total-unique-clientes">0</p>
-                    <div class="nf-tooltip" id="clientes-tooltip"></div>
                 </div>
+                <div class="nf-tooltip" id="clientes-tooltip"></div>
                 <div class="stat-card">
                     <h3>Pedidos</h3>
                     <p id="total-unique-pedidos">0</p>
-                </div>
-                <div>
                 </div>
                 <div class="stat-card">
                     <h3>Separação</h3>
@@ -92,9 +88,11 @@
                     <option value="">Todos os Status</option>
                     <option value="emSeparacao">Separação</option>
                     <option value="separado">Separado</option>
+                    <option value="parcial">Parcial</option>
                     <option value="embalagem">Embalagem</option>
                     <option value="emCompras">Compras</option>
                     <option value="emPca">PCA</option>
+                    <option value="retornoPca">Retorno PCA</option>
                     <option value="concluido">Concluído</option>
                 </select>
 
@@ -189,6 +187,25 @@
                     <select id="edit-status-global"></select>
                 </div>
                 <button type="submit" class="action-btn success">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-separacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Marcar Separação</h2>
+                <span class="close" onclick="closeSeparacaoModal()">&times;</span>
+            </div>
+            <form id="form-separacao">
+                <input type="hidden" id="separacao-item-id">
+                <p>OE: <strong id="separacao-oe"></strong></p>
+                <p>Quantidade Total: <strong id="separacao-qtd-total"></strong></p>
+                <div class="form-group">
+                    <label for="separacao-qtd-separada">Quantidade Separada:</label>
+                    <input type="number" id="separacao-qtd-separada" required min="1">
+                </div>
+                <button type="submit" class="action-btn success">Confirmar Separação</button>
             </form>
         </div>
     </div>
