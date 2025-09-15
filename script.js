@@ -1,6 +1,6 @@
 // COLOQUE A URL DO SEU NOVO WEB APP DO APPS SCRIPT AQUI!
 // Será algo como: https://script.google.com/macros/s/SEU_ID_DE_DEPLOYMENT/exec
-const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxg2z5IOziYu9JtGORuUsvl9anojDUWulT8Nr1VChrsnKTe2C9sBqobkkXpWn2882eZeQ/exec'; // <--- ATUALIZE ESTA URL SE NECESSÁRIO!
+const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyD9S822Grm800-Swo2X_eVJqgbppDGuUP4CuRkyIM9rxO3USo8VzgB_NWCdhwTcGVlMQ/exec'; // <--- ATUALIZE ESTA URL SE NECESSÁRIO!
 
 let currentProfile = 'separacao'; // Perfil padrão ao carregar
 let data = []; // Armazena todos os dados do Google Sheet
@@ -670,6 +670,8 @@ async function changeStatus(itemId, newStatus) {
             _rowIndex: item._rowIndex,
             statusGlobal: newStatus
         };
+        const agora = new Date();
+            updatedItem.dataHoraUltimaAtualizacao = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         // Adicionar lógica de data para o novo status 'separado'
         if (newStatus === 'separado' && !item.dataFimSeparacao) {
             updatedItem.dataFimSeparacao = new Date().toISOString().split('T')[0];

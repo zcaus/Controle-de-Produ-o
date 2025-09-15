@@ -281,6 +281,24 @@ tbody tr:hover {
     width: 90%;
     max-width: 500px;
     position: relative;
+    max-height: 90vh; /* Adicionado: Define a altura m?xima como 90% da altura da viewport */
+    overflow-y: auto; /* Adicionado: Adiciona a barra de rolagem vertical quando o conte?do excede a altura m?xima */
+    display: flex; /* Adicionado: Necess?rio para organizar o conte?do e o header corretamente */
+    flex-direction: column; /* Adicionado: Garante que os itens fiquem em coluna */
+}
+
+/* Adicione esta nova regra para fixar o header do modal no topo quando houver rolagem */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    position: sticky; /* Adicionado: Fica fixo durante a rolagem */
+    top: 0; /* Adicionado: Fixa no topo */
+    background-color: #fefefe; /* Adicionado: Garante que o fundo n?o seja transparente */
+    z-index: 10; /* Adicionado: Garante que o header fique acima do conte?do */
 }
 
 .modal-header {
