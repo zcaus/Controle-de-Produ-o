@@ -210,31 +210,52 @@
         </div>
     </div>
 
-    <div id="modal-to-pca" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Enviar para PCA</h2>
-                <span class="close" onclick="closeModalToPca()">&times;</span>
-            </div>
-            <form id="form-to-pca">
-                <input type="hidden" id="to-pca-item-id">
-                <p>Confirmar envio do item OE: <strong id="to-pca-oe"></strong> para PCA?</p>
-                <div class="form-group">
-                    <label for="to-pca-responsavel">Responsável PCA:</label>
-                    <input type="text" id="to-pca-responsavel" required>
-                </div>
-                <div class="form-group">
-                    <label for="to-pca-tipo-servico">Tipo de Serviço PCA:</label>
-                    <input type="text" id="to-pca-tipo-servico" required>
-                </div>
-                <div class="form-group">
-                    <label for="to-pca-previsao-retorno">Previsão de Retorno:</label>
-                    <input type="date" id="to-pca-previsao-retorno" required>
-                </div>
-                <button type="submit" class="action-btn success">Confirmar Envio</button>
-            </form>
+<div id="modal-to-pca" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Enviar para PCA</h2>
+            <span class="close" onclick="closeModalToPca()">&times;</span>
         </div>
+        <form id="form-to-pca">
+            <input type="hidden" id="to-pca-item-id">
+            <p>Enviar item OE: <strong id="to-pca-oe"></strong> para o PCA.</p>
+            <div class="form-group">
+                <label for="to-pca-responsavel">Responsável PCA:</label>
+                <input type="text" id="to-pca-responsavel" required>
+            </div>
+            <div class="form-group">
+                <label for="to-pca-data-envio">Data de Envio:</label>
+                <input type="date" id="to-pca-data-envio" required>
+            </div>
+            <div class="form-group">
+                <label for="to-pca-previsao-retorno">Previsão de Retorno:</label>
+                <input type="date" id="to-pca-previsao-retorno" required>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <label>Serviços PCA:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="service-precontagem" name="pca-service" value="PRECONTAGEM">
+                    <label for="service-limpeza">PRECONTAGEM</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="service-selar" name="pca-service" value="SELAR">
+                    <label for="service-corte">SELAR</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="service-etiquetar" name="pca-service" value="ETIQUETAR">
+                    <label for="service-pintura">ETIQUETAR</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="service-ilhos" name="pca-service" value="ILHOS">
+                    <label for="service-outros">ILHOS</label>
+                </div>
+            </div>
+            
+            <button type="submit" class="action-btn success">Confirmar Envio</button>
+        </form>
     </div>
+</div>
 
     <div id="modal-from-pca" class="modal">
         <div class="modal-content">

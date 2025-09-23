@@ -259,35 +259,42 @@ tbody tr:hover {
 .action-btn.danger { background-color: #F44336; color: white; }
 
 /* ==================== Modais ==================== */
+/* ==================== Estilos do Modal (Centralização e Layout) ==================== */
 .modal {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: fixed;
-    z-index: 1001;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-    align-items: center;
+    background-color: rgba(0, 0, 0, 0.6);
     justify-content: center;
+    align-items: center;
+}
+
+/* Esta regra faz com que o modal seja exibido */
+.modal.visible {
+    display: flex;
 }
 
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--card-background);
     padding: 20px;
     border-radius: 8px;
     box-shadow: var(--shadow-medium);
-    width: 90%;
     max-width: 500px;
-    position: relative;
-    max-height: 90vh; /* Adicionado: Define a altura m?xima como 90% da altura da viewport */
-    overflow-y: auto; /* Adicionado: Adiciona a barra de rolagem vertical quando o conte?do excede a altura m?xima */
-    display: flex; /* Adicionado: Necess?rio para organizar o conte?do e o header corretamente */
-    flex-direction: column; /* Adicionado: Garante que os itens fiquem em coluna */
+    width: 90%;
+    animation-name: animatetop;
+    animation-duration: 0.4s;
 }
 
-/* Adicione esta nova regra para fixar o header do modal no topo quando houver rolagem */
+@keyframes animatetop {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -378,4 +385,27 @@ tbody tr:hover {
 
 .notification-badge.hidden {
     display: none;
+}
+
+/* Estilos para alinhar os checkboxes no modal PCA */
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px; /* Adiciona espaçamento entre os itens */
+}
+
+/* Garante que os contêineres individuais se alinhem como itens flexíveis */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 5px; /* Adiciona um pequeno espaço entre o checkbox e o texto */
+    width: auto; /* Garante que o checkbox não ocupe 100% da largura */
+}
+
+.form-group label {
+    margin-right: 15px; /* Adiciona um espaço para separar o título "Serviços PCA" dos checkboxes */
 }

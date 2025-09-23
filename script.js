@@ -891,81 +891,85 @@ function closeSeparacaoModal() {
 }
 
 /**
- * Abre o modal para enviar item para PCA.
- * @param {number} itemId - ID do item.
+ * Abre o modal de envio para PCA.
+ * @param {number} itemId - O ID do item a ser enviado.
  */
 function openToPcaModal(itemId) {
-    const item = data.find(item => item.id === itemId);
+    const item = data.find(i => i.id === itemId);
     if (!item) {
-        showAlert('Erro: Item não encontrado.', 'danger');
+        showAlert('Erro: Item não encontrado para envio ao PCA.', 'danger');
         return;
     }
+    
     document.getElementById('to-pca-item-id').value = item.id;
     document.getElementById('to-pca-oe').textContent = item.oe;
-    document.getElementById('to-pca-responsavel').value = item.responsavelPca || '';
-    document.getElementById('to-pca-tipo-servico').value = item.tipoServicoPca || '';
-    document.getElementById('to-pca-previsao-retorno').value = formatToInputDate(item.previsaoRetorno || new Date()); // Preenche com data atual se vazia
-    document.getElementById('modal-to-pca').style.display = 'flex'; // Usar 'flex' para centralização via CSS
+    
+    // Limpa os campos do formulário para o novo envio
+    document.getElementById('to-pca-responsavel').value = '';
+    document.getElementById('to-pca-data-envio').value = new Date().toISOString().split('T')[0];
+    document.getElementById('to-pca-previsao-retorno').value = '';
+
+    // Desmarca todos os checkboxes
+    document.querySelectorAll('#form-to-pca input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // AQUI ESTÁ A CORREÇÃO: Usar style.display para mostrar o modal
+    document.getElementById('modal-to-pca').style.display = 'flex';
 }
 
 /**
- * Lida com o envio do formulário de enviar para PCA.
- * @param {Event} event - Evento de submit.
+ * Manipula o envio do formulário de envio para PCA.
+ * @param {Event} event - O evento de submissão do formulário.
  */
 async function handleSendToPca(event) {
-    event.preventDefault(); 
-    console.log("1. handleSendToPca iniciado."); 
-
+    event.preventDefault();
     const itemId = parseInt(document.getElementById('to-pca-item-id').value);
-    const responsavel = document.getElementById('to-pca-responsavel').value.trim();
-    const tipoServico = document.getElementById('to-pca-tipo-servico').value.trim();
-    const previsaoRetorno = document.getElementById('to-pca-previsao-retorno').value; 
+    const responsavel = document.getElementById('to-pca-responsavel').value;
+    const dataEnvio = document.getElementById('to-pca-data-envio').value;
+    const previsaoRetorno = document.getElementById('to-pca-previsao-retorno').value;
 
-    console.log("2. Valores do formulário capturados:", { responsavel, tipoServico, previsaoRetorno }); 
+    // AQUI ESTÁ A CORREÇÃO: Coletar todos os checkboxes marcados
+    const servicos = Array.from(document.querySelectorAll('#form-to-pca input[name="pca-service"]:checked'))
+                         .map(checkbox => checkbox.value);
 
-    if (!responsavel || !tipoServico || !previsaoRetorno) {
-        showAlert('Por favor, preencha o Responsável PCA, o Tipo de Serviço PCA e a Previsão de Retorno.', 'danger');
-        console.log("3. Validação falhou."); 
+    if (!responsavel || !dataEnvio || !previsaoRetorno || servicos.length === 0) {
+        showAlert('Por favor, preencha todos os campos e selecione pelo menos um tipo de serviço.', 'danger');
         return;
     }
 
     const item = data.find(item => item.id === itemId);
     if (!item) {
-        showAlert('Erro: Item não encontrado para enviar para PCA.', 'danger');
-        console.log("4. Item não encontrado."); 
+        showAlert('Erro: Item não encontrado para envio ao PCA.', 'danger');
         return;
     }
 
     const updatedItem = {
         id: item.id,
         _rowIndex: item._rowIndex,
-        dataEnvio: new Date().toISOString().split('T')[0], 
-        previsaoRetorno: previsaoRetorno, 
+        statusGlobal: 'emPca',
         responsavelPca: responsavel,
-        tipoServicoPca: tipoServico,
-        statusGlobal: 'emPca'
+        dataEnvio: dataEnvio,
+        previsaoRetorno: previsaoRetorno,
+        tipoServicoPca: servicos.join(', ')
     };
-
-    console.log("5. Chamando updateItemsInGoogleSheet com:", updatedItem); 
+    
     try {
-        await updateItemsInGoogleSheet(updatedItem); 
-        closeModalToPca(); 
+        await updateItemsInGoogleSheet(updatedItem);
+        closeModalToPca();
         showAlert(`Item ${item.oe} enviado para PCA com sucesso!`, 'success');
-        console.log("6. updateItemsInGoogleSheet bem-sucedido."); 
     } catch (error) {
         showAlert(`Erro ao enviar para PCA: ${error.message}`, 'danger');
         console.error('Erro ao enviar para PCA:', error);
-        console.log("7. Erro durante a atualização."); 
     }
 }
 
 /**
- * Fecha o modal de enviar para PCA.
+ * Fecha o modal de envio para PCA.
  */
 function closeModalToPca() {
+    // AQUI ESTÁ A CORREÇÃO: Usar style.display para ocultar o modal
     document.getElementById('modal-to-pca').style.display = 'none';
-    document.getElementById('form-to-pca').reset(); 
-    console.log('closeModalToPca: Modal "Enviar para PCA" fechado.');
 }
 
 /**
